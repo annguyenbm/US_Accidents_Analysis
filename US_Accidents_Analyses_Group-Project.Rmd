@@ -24,9 +24,41 @@ library(arules)
 library(tree)
 ```
 
+## Opening
+
+This analysis is part of the group project for course ITEC 620 - Business Insights to Analytics that I took during the Fall 2021 semester. The analysis was conducted on a Kaggle dataset - _US Accidents 2016-2020_. The link to this dataset is provided at the **Reference** section.
+
+I would like to give credits to my friend, also my teammate - Ahmed Malik - for his contributions throughout the group project. While the analysis was also contributed by other team members - Steve Rodriguez and Ho-Ah Kim.
+
 # Executive Summary
 
+According to the International Association of Safe International Travel, approximately 38,000 people dies annually due to traffic accidents in the US (Q, A., 2021). Our objective is to draw actionable conclusions based on trends and causes of traffic accidents to better inform the public domain on potential significant causes and trends of traffic accidents and what can be done to mitigate the high number of accidents in the United States.
+
+Our dataset, retrieved from Kaggle (Moosavi, 2021), contains approximately 46 distinct columns attributing to one dependent variable - the severity of accidents and observations totaling approximately 1.04 million. The high number of data points was crucial in selecting the data set due to its robustness and exploration potential.
+
+The methodology used to analyze the data consisted of both descriptive and predictive models that allowed for valuable insight into the frequency and significant factors contributing to the cause of the accidents. Predictive models allowed for the analysis leading to the probability of certain variables being identified as the major causes of severe accidents.
+The most significant findings when applying descriptive and predictive methods are as follows:
+
+Most accidents (40,000 - 50,000) with a severity level of two, which is also the highest severity frequency in the data set, occur between 3:00 PM and 6:00 PM. For accidents that occurred on highways, the driving factor causing all levels of severity was mainly caused by weather factors. For the accidents that occurred on city roads, all levels of severity were found to be caused primarily by road condition factors. 
+
+Through Logistic Regression (LR) analysis, we found 41 statistically significant variables associated with the probability of a severe accident. However, for predictions, we recommend the Classification Tree model as it generates a significantly smaller error rate (3.08%) in comparison with that by LR (10.6%).
+
+Lastly, we use Holt Winter Model and predicted approximately 43,000 accidents for the first week of 2021.
+
 # Introduction
+
+The problem of traffic accidents in the United States affects thousands of drivers every year. Not only cause significant traffic jams, but also death, and injuries which makes more than 20,000 people die on American roadways (Zipper, 2021). Besides, the other impacts follow up with traffic jams, death, and injuries, which are long-lasting emotional, physical, and sometimes financial burdens. 
+
+In the European Union, they dropped the accident rate by thirty-six percent between 2010 and 2020 and traffic deaths by making regulations and adjusting the restriction (Zipper, 2021). Reducing accidents is one of the crucial tasks for the United States. Therefore, the government's data as a reference for making regulations and restrictions will be a valuable source. In this project, by analyzing the accidents dataset, we would like to provide the government's data to provide solutions to reduce the accidents. 
+
+Our preliminary analysis of the dataset indicates leading variables related to the accidents' severity, including the location of the accident, weather, time that accident occurred, and road conditions. By implementing descriptive and predictive methods on this dataset, we will find the correlation among the variables and determine the relationships between what events, conditions, and causing effects impact more on the accident. 
+
+We will use two descriptive methods to explore and overview our dataset. These two techniques are: (1) Measure of Frequency to identify the pattern of accident frequency by hours and to check which states have the highest rates of accidents over 2016-2020, (2) Association Rules to understand the likelihood of weather, locations, lighting factors that could cause different levels of severity.
+
+For predictive methods, we will examine Logistic Regression and Classification Tree on the prediction of accident severities. Next, we will analyze the potential seasonality of historic data to predict the next 7-day car accident frequency. 
+
+At the end of the project, we will provide actionable insights and suggestions to help US Government reduce the accident rates and accident severities.
+
 
 # Data
 
