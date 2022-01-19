@@ -3,12 +3,12 @@ title: "ITEC 620 - Group Project Proposal"
 author: "Binh Minh An Nguyen, Ahmed Malik"
 date: "11/27/2021"
 output:
-  word_document:
-    toc: yes
-    toc_depth: 2
   html_document:
     df_print: paged
     number_sections: true
+  word_document:
+    toc: yes
+    toc_depth: 2
   pdf_document:
     toc: yes
     toc_depth: '2'
@@ -29,6 +29,8 @@ library(tree)
 This analysis is part of the group project for course ITEC 620 - Business Insights to Analytics that I took during the Fall 2021 semester. The analysis was conducted on a Kaggle dataset - _US Accidents 2016-2020_. The link to this dataset is provided at the **Reference** section.
 
 I would like to give credits to my friend, also my teammate - Ahmed Malik - for his contributions throughout the group project. While the analysis was also contributed by other team members - Steve Rodriguez and Ho-Ah Kim.
+
+The project was submitted during end of November 2021, and was editted by myself in January 2022.
 
 # Executive Summary
 
@@ -60,27 +62,36 @@ For predictive methods, we will examine Logistic Regression and Classification T
 At the end of the project, we will provide actionable insights and suggestions to help US Government reduce the accident rates and accident severities.
 
 
-# Data
+# Data ETL
 
-Before conducting data ingestion, we import the dataset to R using `read_csv()` function under the `tidyverse` package and assign into a variable named `accidents`. Since our dataset is large with multiple logical variables, `read_csv()` functions will be more efficient and productive.
+**Step 1** – A primary data wrangling was done in Excel before we imported the dataset to R. These transformations include inserting a zero value on blank cells under the wind_speed column if the wind_direction is calm. This is based on other existing combination values under these 2 columns. The total rows that had been revised is approximately 600,000 rows.
+
+**Step 2** - Import the dataset to R using `read_csv()` function under the tidyverse package and assign it into a variable named accidents. Since our dataset has multiple logical variables, read_csv() functions will be more efficient and productive.
+
 
 ```{r original-data}
+#| message = FALSE,
+#| warning = FALSE
+
 accidents <- read_csv("~/Documents/Kogod - AU/Fall 2021/ITEC 620/Group Project/US_ Accident_calm_0.csv")
 ```
 
-In this section, we will primarily cleanup our data, while moving on to the **Analysis** section, we will conduct secondary data wrangling for each analysis technique, if necessary. In the following code chunk, we are going to:
+In this section, we will primarily clean up our data; while moving on to the Analysis section, we will conduct secondary data wrangling for each analysis technique, if necessary.
 
-1. Select only 26 relevant attributes
+**Step 2** - In the following code chunk, we are going to:
 
-2. Rename some of the columns/variables
+1.	Select only 26 relevant attributes from the original dataset
 
-3. Re-format the date and time columns
+2.	Rename some of the columns/variables
 
-Since this dataset involve more than 1 million distinct obersations, duplicate removal is not required.
+3.	Re-format the date and time columns, and extract the respective year, month, week, date from the **Start_Date** column
 
-In the following code chunk, we are going to conduct data ETL. And new dataset will be saved into a variable named `accident_c`.
+Since this dataset involves more than 1 million distinct observations - by **Accident_ID**, duplicate removal is not required. Instead, the new dataset will be saved into a variable named `accident_c`.
+
 
 ```{r data-wrangling}
+#| echo = FALSE
+
 accident_c <- accidents %>% 
   select(
     Severity, Start_Time, End_Time, `Distance(mi)`, Description, Number, Street, City, State, Timezone, Weather_Timestamp, 
@@ -110,9 +121,14 @@ accident_c <- accidents %>%
   )
 ```
 
-There were 34,680 rows dropped from the first wrangling process because of the improper date-time values in our original data. Nevertheles, we spot that there were cells contain multiple values under the column **weather_condition** in `accident_c` as well as in the original dataset. Such values observed are conflicting with the single-value concept in a data frame. Therefore, the following code chunk will pickup these strings and split them into different rows each for a single value. Since these are weather conditions that potentially affect the outcome of an accident, we are going to set them up as new dummy variables by using `pivot_wider()` function under the `tidyverse` package. The new dataset will then be assigned to a variable named `accident_pivot`.
+There were 34,680 rows dropped from the first wrangling process because of the improper date-time values under the **Start_Time** column in our original data. 
+
+**Step 3** - We identified cells containing multiple values under the column weather_condition. Such values observed are conflicting with the single-value criterion of a data frame. To address such issues, we use `separate_rows()` function to split the chunks and use pivot_wider() under the tidyverse package to set them up as new column names since these are weather conditions that potentially affect the outcome of an accident. The new dataset will then be assigned to a variable named `accident_pivot`.
+
 
 ```{r accident-pivot}
+#| echo = FALSE
+
 accident_pivot <- accident_c %>% 
   mutate(id = seq(1:n())) %>% 
   filter(!is.na(weather_condition)) %>% 
@@ -140,7 +156,9 @@ accident_pivot <- accident_pivot %>% select_all(tolower)
 
 1. Count the number of each severity
 
-```{r severity-count}
+We developed R code to generate the number of data points by each severity [Appendix 2]. Because of the majority of data points (just over 800K) in the data set having a severity level of two (slightly moderate), we experienced some skewness and accepted the fact.
+
+```{r severity-count, echo =FALSE}
 accident_pivot %>% 
   group_by(severity) %>% 
   summarize(count = n()) %>% 
@@ -153,7 +171,7 @@ accident_pivot %>%
 
 2. Histogram on the frequency of accident by states
 
-```{r accident-by-state, fig.width=8, fig.height=6}
+```{r accident-by-state, fig.width=8, fig.height=6, echo=FALSE}
 # Install `usmap` package to plot a map
 library(usmap)
 
@@ -178,7 +196,9 @@ plot_usmap(data = map_accident, values = "percent", color = "grey88", labels = T
 
 3. Accident rates by timing
 
-```{r accident-heatmap}
+We will firstly group the occurrences of accidents overall by 24 hours and severity and use a heatmap to display how frequent accidents happen during the day. Given the overwhelming amount of data points related to Level 2 severity the heat map below accurately represents the time frame in which approximately 40,000 - 50,000 accidents occur, which is between 3:00 PM - 6:00 PM. It is also logical that the bulk of accidents occur when millions of drivers are on the road due to rush hour. Refer to [Appendix 1] for the code to create this heat-map.
+
+```{r accident-heatmap, echo=FALSE}
 accident_hour <- accident_pivot %>% 
   group_by(hour, severity) %>% 
   summarize(total_accidents = n())
@@ -202,11 +222,9 @@ accident_hour %>%
 
 ### Association Rules
 
-For association Rules, we will create new columns for each car accident severity. Similar process from the `weather_condition` will apply here as per following code chunk. The new dataset with **severity_1** to **severity_4** will be assign to a variable named `accident_binary`. As the result, we will have 107 columns for this new dataset.
+We are interested in learning which particular types of factors causing the most likelihood of each accident severity. Thus, from the initial dependent variable severity, we pick up and split each severity into new columns: severity_1, severity_2, severity_3, and severity_4. Similar process from the weather_condition will apply here. The new data with 107 columns is assigned to a variable named accident_binary.
 
-Besides,... (highway vs city road)
-
-```{r accident-binary}
+```{r accident-binary, include=FALSE}
 accident_binary <- accident_pivot %>% 
   # Create dummy variables for each accident severity
   mutate(
@@ -221,12 +239,14 @@ accident_binary <- accident_pivot %>%
   mutate_if(is.double, ~. > 0.5)
 ```
 
+Furthermore, we segmented the analysis to two separate scenarios which are highway and city since the dynamics of driving are different from each other. In addition, our dataset skewed more to highway accidents with approximately as twice as the city road accidents. Thus, splitting the dataset by road types will help us to gain more valuable insights on the cause of accidents.
 
-**1. Association Rules for Highway**
+1. Association Rules for Highway accident severities
 
-[1] For highway, location conditions such as **amenity**, **crossing**, **stop**, and **railway** become irrelevant. Thus, we will remove these variables prior to running the association rules for the severity of highway accidents.
+**Step 1** - For highway category, location conditions such as amenity, crossing, stop, and railway become irrelevant. Thus, we removed these variables prior to running the association rules for the severity of highway accidents. The association rules will then be sorted by the lift ratio in descending order.
 
-```{r accident-hway}
+
+```{r accident-hway, message=FALSE, warning=FALSE}
 accident_hway <- accident_binary %>% 
   filter(is.highway == TRUE) %>% 
   select(-amenity, -crossing, -stop, -railway, -is.highway)
@@ -235,24 +255,19 @@ hway_rules <- apriori(accident_hway, parameter = list(supp=0.0001, conf=0.0001))
 hway_sorted <- sort(hway_rules, by = "lift")
 ```
 
-[2] Subset the association rules for each severity at the `rhs` and select those rules with the lift ratio of at least 2.
+**Step 2** - Subset the association rules for each severity at the `rhs` and select those rules with the lift ratio of at least 2.
 
- **a. Association Rules for Highway - Severity 1**
-
-```{r hway-sev-1}
+```{r hway-sev-1, echo=FALSE}
 hway_rules_1 <- subset(hway_sorted, subset = rhs %in% c("severity_1") & lift >= 2)
 
 inspect(hway_rules_1)
 ```
 
-The highest rules....
+- **Severity 1**: the highest rule is _{traffic_signal, fair, is.day}_ with the highest lift ratio of 8.871098. The variables of traffic signal, daytime, cloudy, windy, and rain are the most frequently shown among the rules as causing effects for Severity 1.
 
+- **Step 3** - As we filter the association rules with a lift ratio being equal or more than 2, seems like there was no rules returned. Thus, for this section only, we will decrease the criterion of lift ratio for the severity 2.
 
-  **b. Association Rules for Highway - Severity 2**
-
-As we filter the association rules with a lift ratio being equal or more than 2, seems like there was no rules returned. Thus, for this section only, we will decrease the criterion of lift ratio for the severity 2.
-
-```{r hway-sev-2}
+```{r hway-sev-2, echo=FALSE}
 hway_rules_2 <- subset(hway_sorted, subset = rhs %in% c("severity_2") & lift > 1)
 
 inspect(hway_rules_2)
@@ -260,22 +275,29 @@ inspect(hway_rules_2)
 
 It seems like for Severity 2, there are more than 500 combinations of conditions that would cause the accident with severity 2 to happen more likely. However, none of them reach the likelihood or a lift ratio of 1.5.
 
-  **c. Association Rules for Highway - Severity 3**
+More than 500 combinations of conditions were generated; however, none of them reached the likelihood or a lift ratio of 1.5, since Severity 2 is dominant among all severities [Appendix 4]. Therefore, any conditions can cause the likelihood of this type of accident. In other words, none of them hold extreme effects. Overall, weather conditions that reduce visibility, day time, and highway junctions are the most common factors causing the likelihood of Severity 2, the most effective rule here is {junction, smoke, is.day} with a lift ratio of 1.201788.
 
-```{r hway-sev-3}
+- **Step 4** - Filter association rules for Severity 3 - Highway
+
+```{r hway-sev-3, echo=FALSE}
 hway_rules_3 <- subset(hway_sorted, subset = rhs %in% c("severity_3") & lift >= 2)
 
 inspect(hway_rules_3)
 ```
 
-  **d. Association Rules for Highway - Severity 4**
+For Severity 3, the highest lift ratio of 2.982320 belongs to {t-storm, is.day} [Appendix 5]. The variables, which are most frequently shown up, are storm, thunder, and rain.
 
-```{r hway-sev-4}
+- **Step 5** - Filter association rules for Severity 4 - Highway
+
+```{r hway-sev-4, echo=FALSE}
 hway_rules_4 <- subset(hway_sorted, subset = rhs %in% c("severity_4") & lift >= 1.5)
 
 inspect(hway_rules_4)
 ```
 
+For the Severity 4, the most attentive rule is {junction, light_snow} with a lift ratio of 2.108521 [Appendix 6]. Overall, giveaway, junction, snow, overcast, and cloudy have the highest occurrence. 
+
+In summary, for highway accidents, severities, especially Severity 3, are significantly impacted by the weather condition. 
 
 **2. Association Rules for Severities of Accidents on city roads**
 
