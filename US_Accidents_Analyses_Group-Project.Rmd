@@ -8,6 +8,7 @@ output:
     toc_depth: 2
   html_document:
     df_print: paged
+    number_sections: true
   pdf_document:
     toc: yes
     toc_depth: '2'
